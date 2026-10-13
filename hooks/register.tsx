@@ -1,13 +1,29 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, SessionContextUsage, SessionCost, SessionRateLimit } from 'claude-code'
+import type { Register, RenderChildren, SessionContextUsage, SessionCost, SessionRateLimit } from 'claude-code'
 
-import type { UsageSnapshot } from '../types'
+import type { UsageLimit, UsageSnapshot } from '../types'
 
 const snapshot = atom({ plugin: 'usage-band', key: 'snapshot' } as const, null)
 const lastTurnMs = atom({ plugin: 'usage-band', key: 'lastTurnMs' } as const, null)
 const isHidden = atom({ plugin: 'usage-band', key: 'isHidden' } as const, false)
 
+const PANE = 'usage-band.painel'
+const PANE_TITLE = 'Uso do Claude'
+
 const LIMIT_LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d', spend_limit: 'gasto' }
+const LIMIT_TITLES: Record<string, string> = { five_hour: 'Sessão (5h)', seven_day: 'Semanal (7 dias)', spend_limit: 'Gasto' }
+
+// Paleta Everforest, a mesma da extensão do VS Code/Antigravity: cada janela de limite tem a sua cor; em alerta vale a de severidade.
+const COLORS = { five: '#7fbbb3', week: '#dbbc7f', contextAlert: '#e69875', limitAlert: '#e67e80', bar: '#a7c080' }
+const LIMIT_COLORS: Record<string, string> = { five_hour: COLORS.five, seven_day: COLORS.week }
+const limitColor = (l: UsageLimit): string | undefined => (l.percentUsed >= 90 ? COLORS.limitAlert : LIMIT_COLORS[l.kind])
+const contextColor = (percent: number | null): string | undefined => (percent !== null && percent >= 80 ? COLORS.contextAlert : undefined)
+
+const toMs = (iso: string | undefined): number | null => {
+  if (!iso) return null
+  const t = Date.parse(iso)
+  return Number.isNaN(t) ? null : t
+}
 
 const toSnapshot = (
   startedAt: number | null,
@@ -19,7 +35,7 @@ const toSnapshot = (
   contextPercent: context.percent ?? null,
   contextTokens: context.tokens ?? null,
   contextWindow: context.window,
-  limits: rateLimits.map(l => ({ kind: l.kind, percentUsed: l.percentUsed })),
+  limits: rateLimits.map(l => ({ kind: l.kind, percentUsed: l.percentUsed, resetsAt: toMs(l.resetsAt) })),
   costUsd: cost?.usd ?? null,
 })
 
@@ -31,10 +47,29 @@ const formatElapsed = (ms: number): string => {
   return min > 60 ? `${Math.floor(min / 60)}h${`${min % 60}`.padStart(2, '0')}` : `${min}m`
 }
 
+const formatRemaining = (ms: number): string => {
+  const min = Math.max(0, Math.floor(ms / 60_000))
+  if (min >= 1440) return `${Math.floor(min / 1440)}d ${Math.floor((min % 1440) / 60)}h`
+  if (min >= 60) return `${Math.floor(min / 60)}h${`${min % 60}`.padStart(2, '0')}`
+  return `${min}m`
+}
+
 const formatTurn = (ms: number): string => {
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}:${`${s % 60}`.padStart(2, '0')}`
 }
+
+const contextText = (s: UsageSnapshot): string =>
+  s.contextTokens === null
+    ? `–/${formatTokens(s.contextWindow)}`
+    : `${formatTokens(s.contextTokens)}/${formatTokens(s.contextWindow)} (${s.contextPercent ?? 0}%)`
+
+const limitText = (l: UsageLimit, now: number): string =>
+  `${LIMIT_LABELS[l.kind] ?? l.kind} ${l.percentUsed}%${l.resetsAt === null ? '' : ` ↻${formatRemaining(l.resetsAt - now)}`}`
+
+type Segment = { text: string; color?: string }
+
+const colorProps = (color: string | undefined) => (color ? { color } : {})
 
 export const register: Register = on => {
   let turnStartedAt: number | null = null
@@ -43,7 +78,11 @@ export const register: Register = on => {
     const result = await next(e)
     const u = await $.session.usage()
     await update($, snapshot, () => toSnapshot(u.startedAt, u.context, u.rateLimits, u.cost))
-    await $.command.register({ name: 'uso', description: 'Mostra/oculta a barra de uso acima do prompt' })
+    await $.command.register({
+      name: 'uso',
+      description: 'Mostra/oculta a barra de uso acima do prompt; "/uso painel" abre o painel com barras',
+      argumentHint: '[painel]',
+    })
     return result
   })
 
@@ -58,7 +97,7 @@ export const register: Register = on => {
   })
 
   on('prompt.submit', async ($, e, next) => {
-    turnStartedAt = await $.clock.now()
+    turnStartedAt = await $.clock.now().catch(() => null)
     return next(e)
   })
 
@@ -72,6 +111,10 @@ export const register: Register = on => {
   })
 
   on('command.run', { command: 'uso' }, async ($, e) => {
+    if (e.args.trim().toLowerCase() === 'painel') {
+      const opened = await $.ui.open({ id: PANE, title: PANE_TITLE })
+      return { text: opened.isPlaced ? 'Painel de uso aberto.' : 'Esta tela não exibe painéis agora; a barra acima do prompt continua ativa.' }
+    }
     const hidden = await update($, isHidden, v => !v)
     return { text: hidden ? 'Barra de uso oculta.' : 'Barra de uso visível.' }
   })
@@ -82,25 +125,80 @@ export const register: Register = on => {
       return next(e)
     }
 
+    const now = await $.clock.now()
     const turn = await read($, lastTurnMs)
-    const parts: string[] = []
+    const segments: Segment[] = []
 
-    if (s.startedAt !== null) parts.push(`⏱ ${formatElapsed((await $.clock.now()) - s.startedAt)}`)
-    parts.push(
-      s.contextTokens === null
-        ? `–/${formatTokens(s.contextWindow)}`
-        : `${formatTokens(s.contextTokens)}/${formatTokens(s.contextWindow)} (${s.contextPercent ?? 0}%)`,
-    )
-    for (const l of s.limits) parts.push(`${LIMIT_LABELS[l.kind] ?? l.kind} ${l.percentUsed}%`)
-    if (s.costUsd !== null) parts.push(`US$ ${s.costUsd.toFixed(2)}`)
-    if (turn !== null) parts.push(`turno ${formatTurn(turn)}`)
+    const head = [s.startedAt !== null ? `⏱ ${formatElapsed(now - s.startedAt)}` : null, contextText(s)].filter(Boolean).join(' · ')
+    segments.push({ text: head, color: contextColor(s.contextPercent) })
+    for (const l of s.limits) segments.push({ text: limitText(l, now), color: limitColor(l) })
+    const tail = [s.costUsd !== null ? `US$ ${s.costUsd.toFixed(2)}` : null, turn !== null ? `turno ${formatTurn(turn)}` : null]
+      .filter(Boolean)
+      .join(' · ')
+    if (tail) segments.push({ text: tail })
 
     const { Box, Text } = $.ui.resolve(e)
+    const children: RenderChildren[] = []
+    segments.forEach((seg, i) => {
+      if (i > 0) children.push(<Text dimColor>{' · '}</Text>)
+      children.push(<Text {...colorProps(seg.color)}>{seg.text}</Text>)
+    })
 
     return (
-      <Box>
-        <Text key="usage">{parts.join(' · ')}</Text>
+      <Box flexDirection="row" flexWrap="wrap">
+        {children}
       </Box>
     )
+  })
+
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    const { Box, Text } = $.ui.resolve(e)
+    const s = await read($, snapshot)
+    if (s === null) return <Text dimColor>Aguardando os dados da sessão.</Text>
+
+    const now = await $.clock.now()
+    const turn = await read($, lastTurnMs)
+    const width = Math.max(10, Math.min(40, e.props.bodyColumns - 2))
+
+    const bar = (percent: number, color: string | undefined) => {
+      const filled = Math.round((Math.min(100, Math.max(0, percent)) / 100) * width)
+      return (
+        <Box flexDirection="row">
+          <Text {...colorProps(color ?? COLORS.bar)}>{'█'.repeat(filled)}</Text>
+          <Text dimColor>{'░'.repeat(width - filled)}</Text>
+        </Box>
+      )
+    }
+    const row = (label: string, value: string, color?: string) => (
+      <Box flexDirection="row" justifyContent="space-between" width={width}>
+        <Text bold {...colorProps(color)}>
+          {label}
+        </Text>
+        <Text {...colorProps(color)}>{value}</Text>
+      </Box>
+    )
+
+    const body: RenderChildren[] = [<Text bold dimColor>USO DA ASSINATURA</Text>]
+    if (s.limits.length === 0) body.push(<Text dimColor>Limites ainda não informados nesta sessão.</Text>)
+    for (const l of s.limits) {
+      const color = limitColor(l)
+      body.push(row(LIMIT_TITLES[l.kind] ?? l.kind, `${l.percentUsed}%`, color))
+      body.push(bar(l.percentUsed, color))
+      if (l.resetsAt !== null) body.push(<Text dimColor>{`Reseta em ${formatRemaining(l.resetsAt - now)}`}</Text>)
+      body.push(<Text> </Text>)
+    }
+
+    body.push(<Text bold dimColor>SESSÃO ATUAL</Text>)
+    if (s.contextPercent !== null) {
+      const color = contextColor(s.contextPercent)
+      body.push(row('Contexto', `${s.contextPercent}%`, color))
+      body.push(bar(s.contextPercent, color))
+      body.push(<Text dimColor>{contextText(s)}</Text>)
+    }
+    if (s.startedAt !== null) body.push(row('Tempo', formatElapsed(now - s.startedAt)))
+    if (s.costUsd !== null) body.push(row('Custo', `US$ ${s.costUsd.toFixed(2)}`))
+    if (turn !== null) body.push(row('Último turno', formatTurn(turn)))
+
+    return <Box flexDirection="column">{body}</Box>
   })
 }

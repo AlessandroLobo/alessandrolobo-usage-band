@@ -1,30 +1,100 @@
 # usage-band
 
-Mod do Claude Code que exibe uma barra acima do prompt com o uso da sessão:
+Mod do **Claude Code** (Desktop e terminal) que mostra uma barra acima do prompt com o uso da sessão, e um painel com barras de progresso:
 
 ```
-⏱ 60m · 120k/1M (12%) · 5h 35% · 7d 19% · US$ 0.82 · turno 0:58
+⏱ 60m · 120k/1M (12%) · 5h 35% ↻3h22 · 7d 19% ↻2d 4h · US$ 0.82 · turno 0:58
 ```
+
+Os números vêm **direto do Claude Code**, a cada resposta: limites, contexto e custo são os mesmos que ele usa. O mod não faz nenhuma consulta própria, não lê token e não usa a rede.
+
+> Usa VS Code ou Antigravity? A extensão do Claude Code para o editor não desenha esta barra. Para o editor, use a extensão [claude-usage-statusbar](https://github.com/AlessandroLobo/claude-usage-statusbar).
+
+## O que cada campo significa
 
 | Campo | Significado |
 | --- | --- |
-| `⏱` | Tempo da sessão |
+| `⏱ 60m` | Tempo da sessão |
 | `120k/1M (12%)` | Tokens de contexto usados / janela do modelo |
-| `5h` / `7d` | Uso dos limites de 5 horas e 7 dias da assinatura |
-| `US$` | Custo acumulado da sessão (quando disponível) |
-| `turno` | Duração do último turno |
+| `5h 35% ↻3h22` | Uso do limite de 5 horas da assinatura e tempo até reiniciar |
+| `7d 19% ↻2d 4h` | Uso do limite semanal e tempo até reiniciar |
+| `US$ 0.82` | Custo acumulado da sessão, somado pelo próprio Claude Code (quando disponível) |
+| `turno 0:58` | Duração do último turno |
 
-Ao passar de 90% em algum limite, um aviso (toast) é exibido. O comando `/uso` mostra/oculta a barra.
+## Cores
+
+As cores são da paleta **Everforest**, as mesmas da extensão [claude-usage-statusbar](https://github.com/AlessandroLobo/claude-usage-statusbar) no VS Code/Antigravity, para a barra ficar igual nos dois lugares.
+
+| Item | Quando | Cor |
+| --- | --- | --- |
+| Limite **5h** | normal | azul `#7fbbb3` |
+| Limite **7d** | normal | amarelo `#dbbc7f` |
+| Limite 5h ou 7d | a partir de **90%** | vermelho `#e67e80`, e um aviso (toast) aparece |
+| Tempo e contexto | contexto a partir de **80%** | laranja `#e69875` |
+| Barra de contexto no painel | normal | verde `#a7c080` |
+| Separadores `·` | sempre | esmaecidos |
+
+São tons pensados para fundo escuro; num tema claro do Claude Code ficam mais suaves.
+
+## Painel
+
+`/uso painel` abre o painel **Uso do Claude**, com barras de progresso nas mesmas cores:
+
+```
+USO DA ASSINATURA
+Sessão (5h)                          35%
+█████████████░░░░░░░░░░░░░░░░░░░░░░░░░
+Reseta em 3h22
+
+Semanal (7 dias)                     19%
+███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Reseta em 2d 4h
+
+SESSÃO ATUAL
+Contexto                             12%
+████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+120k/1M (12%)
+Tempo                                60m
+Custo                            US$ 0.82
+Último turno                        0:58
+```
+
+O painel aparece onde a tela comporta um (no terminal, ao lado da conversa em tela cheia a partir de 110 colunas; nos demais casos, acima do prompt). Se a tela não puder exibi-lo, `/uso painel` avisa e a barra continua funcionando.
+
+## Comandos
+
+| Comando | Ação |
+| --- | --- |
+| `/uso` | Mostra/oculta a barra acima do prompt |
+| `/uso painel` | Abre o painel com barras |
 
 ## Instalação
 
-Num terminal com o Claude Code:
+No Claude Code (Desktop ou terminal):
 
 ```
 /plugin install usage-band --marketplace AlessandroLobo/alessandrolobo-usage-band
 ```
 
-Responda `y` para adicionar o marketplace e escolha o escopo **user** para carregar em todas as sessões.
+Responda `y` para adicionar o marketplace e escolha o escopo **user**, para carregar em todas as sessões.
+
+Ou com **um comando** no PowerShell (ou em qualquer terminal) — adiciona o marketplace e instala no escopo **user**:
+
+```powershell
+claude plugin install usage-band --marketplace AlessandroLobo/alessandrolobo-usage-band
+```
+
+Depois, reinicie o Claude Code (ou abra uma sessão nova).
+
+## Atualização
+
+O Claude Code não atualiza o mod sozinho. Para receber uma versão nova, um comando no PowerShell:
+
+```powershell
+claude plugin marketplace update eficaz-mods; claude plugin update usage-band@eficaz-mods
+```
+
+Depois, **reinicie o Claude Code** (ou abra uma sessão nova). Quem não atualizar continua com a versão que tem, funcionando normalmente.
 
 ## Desenvolvimento
 
@@ -32,3 +102,11 @@ Responda `y` para adicionar o marketplace e escolha o escopo **user** para carre
 claude plugin validate .
 claude plugin test .
 ```
+
+`hooks/register.tsx` é o módulo do mod (barra, painel e comando), `types/index.d.ts` declara o estado que ele guarda e `tests/band.test.tsx` cobre a barra e o painel no terminal e no Desktop.
+
+Para publicar uma versão: aumente `version` em `.claude-plugin/plugin.json`, faça commit e push. Quem já instalou recebe com os comandos de [Atualização](#atualização).
+
+## Privacidade
+
+O mod só lê o que o próprio Claude Code entrega a ele (uso da sessão, limites e custo) e guarda esses valores no estado da sessão. Não faz requisições de rede, não lê credenciais e não grava arquivos. Projeto não oficial, sem vínculo com a Anthropic.

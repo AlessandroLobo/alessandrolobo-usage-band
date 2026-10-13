@@ -1,4 +1,4 @@
-export type UsageLimit = { kind: string; percentUsed: number }
+export type UsageLimit = { kind: string; percentUsed: number; resetsAt: number | null }
 
 export type UsageSnapshot = {
   startedAt: number | null
