@@ -2,9 +2,11 @@
 
 Mod do **Claude Code** (Desktop e terminal) que mostra uma barra acima do prompt com o uso da sessão, e um painel com barras de progresso:
 
-```
-⏱ 60m · 120k/1M (12%) · 5h 35% ↻3h22 · 7d 19% ↻2d 4h · US$ 0.82 · turno 0:58
-```
+<p align="center">
+  <img src="docs/barra-desktop.png" alt="Barra de uso acima do prompt no Claude Code Desktop" width="785">
+</p>
+
+<p align="center"><em>Captura real no Claude Code Desktop: 5h em azul, 7d em amarelo, com o tempo até cada limite reiniciar.</em></p>
 
 Os números vêm **direto do Claude Code**, a cada resposta: limites, contexto e custo são os mesmos que ele usa. O mod não faz nenhuma consulta própria, não lê token e não usa a rede.
 
