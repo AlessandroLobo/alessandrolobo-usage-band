@@ -1,0 +1,5 @@
+{
+  "name": "eficaz-mods",
+  "owner": { "name": "Alessandro Lobo" },
+  "plugins": [{ "name": "usage-band", "source": "./" }]
+}

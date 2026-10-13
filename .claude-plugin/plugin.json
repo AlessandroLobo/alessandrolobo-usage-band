@@ -1,0 +1,9 @@
+{
+  "name": "usage-band",
+  "version": "0.1.0",
+  "description": "Barra acima do prompt com uso de contexto, limites de 5h/7d e custo da sessão",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Alessandro Lobo"
+  }
+}
