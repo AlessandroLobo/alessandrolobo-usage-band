@@ -100,6 +100,30 @@ claude plugin marketplace update eficaz-mods; claude plugin update usage-band@ef
 
 Depois, **reinicie o Claude Code** (ou abra uma sessão nova). Quem não atualizar continua com a versão que tem, funcionando normalmente.
 
+## Desinstalação
+
+Para **desligar sem remover** (dá para religar depois):
+
+```powershell
+claude plugin disable usage-band@eficaz-mods
+```
+
+Para **remover** o plugin:
+
+```powershell
+claude plugin uninstall usage-band@eficaz-mods
+```
+
+Para remover também o marketplace (opcional, só se não for usar outros mods dele):
+
+```powershell
+claude plugin marketplace remove eficaz-mods
+```
+
+Depois, **reinicie o Claude Code** (ou abra uma sessão nova). Pelo Claude Code, o equivalente é abrir `/plugin`, escolher **usage-band** e desativar ou desinstalar.
+
+Para só **ocultar a barra** sem mexer no plugin, use `/uso` (de novo para mostrar).
+
 ## Desenvolvimento
 
 ```
