@@ -65,6 +65,20 @@ Custo                            US$ 0.82
 
 O painel aparece onde a tela comporta um (no terminal, ao lado da conversa em tela cheia a partir de 110 colunas; nos demais casos, acima do prompt). Se a tela não puder exibi-lo, `/uso painel` avisa e a barra continua funcionando.
 
+## Onde mostrar
+
+Você escolhe onde ver o uso. Cada lugar tem o seu interruptor:
+
+| Quero ver | Acima do chat (este plugin) | Barra de status (extensão [claude-usage-statusbar](https://github.com/AlessandroLobo/claude-usage-statusbar)) |
+| --- | --- | --- |
+| **Só acima do chat** | ligado | desligada |
+| **Só na barra de baixo** | desligado | ligada |
+| **Nos dois** (padrão) | ligado | ligada |
+
+**Acima do chat (este plugin):** no Claude Code, `/plugin` → **usage-band** → **Configure** → desligue **Mostrar a barra acima do prompt**. Pelo terminal: `claude plugin configure usage-band`. A mudança recarrega o plugin; o painel (`/uso painel`) continua disponível. Para esconder só na sessão atual, use `/uso`. Exige a versão 0.3.0 ou mais nova.
+
+**Barra de status (extensão do VS Code/Antigravity):** `Ctrl+,` → busque **Claude Usage** → desmarque **Show Status Bar**. Detalhes no README da extensão.
+
 ## Comandos
 
 | Comando | Ação |

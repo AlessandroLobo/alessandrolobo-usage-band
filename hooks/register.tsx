@@ -71,7 +71,8 @@ type Segment = { text: string; color?: string }
 
 const colorProps = (color: string | undefined) => (color ? { color } : {})
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const showBand = options.showAbovePrompt !== false
   let turnStartedAt: number | null = null
 
   on('session.start', async ($, e, next) => {
@@ -121,7 +122,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const s = await read($, snapshot)
-    if (e.props.hasSurvey || s === null || (await read($, isHidden))) {
+    if (!showBand || e.props.hasSurvey || s === null || (await read($, isHidden))) {
       return next(e)
     }
 

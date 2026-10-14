@@ -72,3 +72,21 @@ test('o painel mostra barras e o tempo até reiniciar', async ($, on) => {
     await ui.unmount()
   }
 })
+
+test('com showAbovePrompt desligado a barra não é desenhada, mas o painel continua', { options: { showAbovePrompt: false } }, async ($, on) => {
+  setup(on)
+  on('ui.render', ($$, e) => {
+    const { Box } = $$.ui.resolve(e)
+    return <Box />
+  })
+
+  await $.session.start({ cwd: '/tmp', surface: 'desktop', isInteractive: true })
+
+  const band = await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...BAND })
+  expect(await band.find({ type: 'Text', text: /5h 42%/ })).toBeUndefined()
+  await band.unmount()
+
+  const pane = await $.ui.mount({ plugin: 'usage-band', surface: 'desktop', ...PANE })
+  expect(await pane.find({ type: 'Text', text: 'Sessão (5h)' })).toBeDefined()
+  await pane.unmount()
+})

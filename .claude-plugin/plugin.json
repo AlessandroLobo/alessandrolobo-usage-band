@@ -1,9 +1,17 @@
 {
   "name": "usage-band",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Barra acima do prompt com uso de contexto, limites de 5h/7d e custo da sessão",
   "types": "./types/index.d.ts",
   "author": {
     "name": "Alessandro Lobo"
+  },
+  "userConfig": {
+    "showAbovePrompt": {
+      "type": "boolean",
+      "title": "Mostrar a barra acima do prompt",
+      "description": "Desligue para ocultar a barra acima da caixa de mensagem (o painel /uso painel continua disponível).",
+      "default": true
+    }
   }
 }

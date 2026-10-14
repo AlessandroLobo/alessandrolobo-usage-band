@@ -27,6 +27,10 @@ Plugin ("mod") do **Claude Code Desktop e terminal** que desenha uma barra acima
 - Cores: hex da paleta **Everforest**, iguais às da extensão do VS Code — 5h `#7fbbb3`, 7d `#dbbc7f`, contexto ≥ 80% `#e69875`, limite ≥ 90% `#e67e80`, barra de contexto `#a7c080`. (Antes usava chaves do tema — `planMode`, `warning`; trocado para ficar igual ao VS Code.)
 - Painel: barras de texto `█`/`░` com largura `min(40, bodyColumns − 2)`; `/uso painel` informa quando a tela não comporta painel (`isPlaced` falso).
 
+## Onde mostrar
+
+`userConfig.showAbovePrompt` (boolean, padrão `true`) desliga só a barra do `AbovePrompt`; o painel e o `/uso painel` seguem. Lido em `register(on, options)`; mudar no menu de configuração recarrega o módulo. A extensão `claude-usage-statusbar` tem o equivalente `claudeUsageBar.showStatusBar`. Teste: `{ options: { showAbovePrompt: false } }` em `tests/band.test.tsx`.
+
 ## Verificar
 
 ```
