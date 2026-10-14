@@ -17,7 +17,7 @@ Plugin ("mod") do **Claude Code Desktop e terminal** que desenha uma barra acima
 | `hooks/hooks.json` → `hooks/register.tsx` | Módulo do plugin: barra (`ui.render` `AbovePrompt`), painel (`ui.render` `Pane`, id `usage-band.painel`), comando `/uso [painel]`, aviso a 90%. |
 | `types/index.d.ts` | Contrato do estado (`PluginState['usage-band']`: `snapshot`, `lastTurnMs`, `isHidden`) e tipos `UsageSnapshot`/`UsageLimit` (com `resetsAt` em ms). |
 | `tests/band.test.tsx` | Testes da barra e do painel em `terminal` e `desktop` (`claude plugin test .`). |
-| `docs/barra-desktop.png` | Captura real usada no README. |
+| `docs/barra-desktop-0.2.png` | Captura real usada no README. |
 
 ## Como funciona
 
