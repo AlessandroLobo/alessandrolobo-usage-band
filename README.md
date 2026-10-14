@@ -14,14 +14,16 @@ Os números vêm **direto do Claude Code**, a cada resposta: limites, contexto e
 
 ## O que cada campo significa
 
-| Campo | Significado |
+| Campo | O que significa |
 | --- | --- |
-| `⏱ 60m` | Tempo da sessão |
-| `120k/1M (12%)` | Tokens de contexto usados / janela do modelo |
-| `5h 35% ↻3h22` | Uso do limite de 5 horas da assinatura e tempo até reiniciar |
-| `7d 19% ↻2d 4h` | Uso do limite semanal e tempo até reiniciar |
-| `US$ 0.82` | Custo acumulado da sessão, somado pelo próprio Claude Code (quando disponível) |
-| `turno 0:58` | Duração do último turno |
+| `⏱ 1h36` | **Tempo da sessão**: desde o início desta conversa do Claude Code. |
+| `65k/1M (7%)` | **Contexto**: tokens que o Claude está "lembrando" agora / janela do modelo. A partir de **80%** fica laranja; perto de 100%, use `/compact` ou abra uma conversa nova. |
+| `5h 57% ↻3h08` | **Limite de 5 horas** da assinatura (azul): uso e tempo até a janela reiniciar. A partir de **90%** fica vermelho e aparece um aviso. |
+| `7d 56% ↻1h18` | **Limite semanal** (amarelo): uso e tempo até reiniciar. A partir de **90%** fica vermelho e aparece um aviso. |
+| `US$ 0.34` | **Custo** da sessão, somado pelo próprio Claude Code (quando disponível). |
+| `turno 0:05` | **Duração da última resposta** do Claude, do envio até terminar. |
+
+Todos os números chegam **a cada resposta** do Claude, direto do Claude Code — não há atraso nem consulta extra.
 
 ## Cores
 
