@@ -13,11 +13,27 @@ const PANE_TITLE = 'Uso do Claude'
 const LIMIT_LABELS: Record<string, string> = { five_hour: '5h', seven_day: '7d', spend_limit: 'gasto' }
 const LIMIT_TITLES: Record<string, string> = { five_hour: 'Sessão (5h)', seven_day: 'Semanal (7 dias)', spend_limit: 'Gasto' }
 
-// Paleta Everforest, a mesma da extensão do VS Code/Antigravity: cada janela de limite tem a sua cor; em alerta vale a de severidade.
-const COLORS = { five: '#7fbbb3', week: '#dbbc7f', contextAlert: '#e69875', limitAlert: '#e67e80', bar: '#a7c080' }
-const LIMIT_COLORS: Record<string, string> = { five_hour: COLORS.five, seven_day: COLORS.week }
-const limitColor = (l: UsageLimit): string | undefined => (l.percentUsed >= 90 ? COLORS.limitAlert : LIMIT_COLORS[l.kind])
-const contextColor = (percent: number | null): string | undefined => (percent !== null && percent >= 80 ? COLORS.contextAlert : undefined)
+// Mesmo degradê da extensão do VS Code: cor-base até 50%, âmbar em 75% e vermelho a partir de 90%.
+const COLORS = { limit: '#89d185', context: '#89d185' }
+const RAMP = { start: 50, amber: 75, red: 90 }
+const AMBER: Rgb = [229, 165, 10]
+const RED: Rgb = [241, 76, 76]
+
+type Rgb = [number, number, number]
+const parseHex = (c: string): Rgb => [0, 2, 4].map(i => parseInt(c.slice(1 + i, 3 + i), 16)) as Rgb
+const toHex = (rgb: Rgb): string => `#${rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('')}`
+const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+
+// Cor para um uso de 0–100: `base` até `start`, depois âmbar e vermelho; sem `base`, só colore a partir do âmbar.
+const usageColor = (percent: number, base?: string): string | undefined => {
+  const p = Math.min(100, Math.max(0, percent))
+  if (p <= (base ? RAMP.start : RAMP.amber)) return base
+  if (p >= RAMP.red) return toHex(RED)
+  if (p >= RAMP.amber) return toHex(mix(AMBER, RED, (p - RAMP.amber) / (RAMP.red - RAMP.amber)))
+  return toHex(mix(parseHex(base as string), AMBER, (p - RAMP.start) / (RAMP.amber - RAMP.start)))
+}
+const limitColor = (l: UsageLimit): string | undefined => usageColor(l.percentUsed, COLORS.limit)
+const contextColor = (percent: number | null): string | undefined => (percent === null ? undefined : usageColor(percent))
 
 const toMs = (iso: string | undefined): number | null => {
   if (!iso) return null
@@ -52,6 +68,13 @@ const formatRemaining = (ms: number): string => {
   if (min >= 1440) return `${Math.floor(min / 1440)}d ${Math.floor((min % 1440) / 60)}h`
   if (min >= 60) return `${Math.floor(min / 60)}h${`${min % 60}`.padStart(2, '0')}`
   return `${min}m`
+}
+
+// Momento do reinício: "às 18:41" se for hoje, "ter. às 21:00" nos outros dias.
+const resetClock = (resetsAt: number, now: number): string => {
+  const d = new Date(resetsAt)
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return d.toDateString() === new Date(now).toDateString() ? `às ${time}` : `${d.toLocaleDateString('pt-BR', { weekday: 'short' })} às ${time}`
 }
 
 const formatTurn = (ms: number): string => {
@@ -165,7 +188,7 @@ export const register: Register = (on, options) => {
       const filled = Math.round((Math.min(100, Math.max(0, percent)) / 100) * width)
       return (
         <Box flexDirection="row">
-          <Text {...colorProps(color ?? COLORS.bar)}>{'█'.repeat(filled)}</Text>
+          <Text {...colorProps(color ?? COLORS.context)}>{'█'.repeat(filled)}</Text>
           <Text dimColor>{'░'.repeat(width - filled)}</Text>
         </Box>
       )
@@ -185,7 +208,7 @@ export const register: Register = (on, options) => {
       const color = limitColor(l)
       body.push(row(LIMIT_TITLES[l.kind] ?? l.kind, `${l.percentUsed}%`, color))
       body.push(bar(l.percentUsed, color))
-      if (l.resetsAt !== null) body.push(<Text dimColor>{`Reseta em ${formatRemaining(l.resetsAt - now)}`}</Text>)
+      if (l.resetsAt !== null) body.push(<Text dimColor>{`Reseta em ${formatRemaining(l.resetsAt - now)} (${resetClock(l.resetsAt, now)})`}</Text>)
       body.push(<Text> </Text>)
     }
 
@@ -193,7 +216,7 @@ export const register: Register = (on, options) => {
     if (s.contextPercent !== null) {
       const color = contextColor(s.contextPercent)
       body.push(row('Contexto', `${s.contextPercent}%`, color))
-      body.push(bar(s.contextPercent, color))
+      body.push(bar(s.contextPercent, usageColor(s.contextPercent, COLORS.context)))
       body.push(<Text dimColor>{contextText(s)}</Text>)
     }
     if (s.startedAt !== null) body.push(row('Tempo', formatElapsed(now - s.startedAt)))

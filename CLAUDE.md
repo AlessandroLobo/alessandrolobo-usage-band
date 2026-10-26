@@ -24,7 +24,7 @@ Plugin ("mod") do **Claude Code Desktop e terminal** que desenha uma barra acima
 - Dados **ao vivo do próprio Claude Code**: `$.session.usage()` no `session.start` e o evento `session.measure` a cada resposta (`context`, `rateLimits` com `percentUsed`/`resetsAt`, `cost.usd`). Sem rede, sem token, sem arquivos.
 - Duração do turno: `prompt.submit` → `turn.complete` com `$.clock.now()`.
 - Barra: segmentos `Text` separados por `·` esmaecidos; cada limite com cor própria e `↻` + tempo até reiniciar.
-- Cores: hex da paleta **Everforest**, iguais às da extensão do VS Code — 5h `#7fbbb3`, 7d `#dbbc7f`, contexto ≥ 80% `#e69875`, limite ≥ 90% `#e67e80`, barra de contexto `#a7c080`. (Antes usava chaves do tema — `planMode`, `warning`; trocado para ficar igual ao VS Code.)
+- Cores: mesmo degradê por uso da extensão do VS Code (`usageColor`): limites 5h/7d com base verde `#89d185` até 50%, âmbar `#e5a50a` em 75% e vermelho `#f14c4c` a partir de 90%; contexto sem cor até 75% (barra do painel verde `#89d185` com o mesmo degradê). Mudou lá, mude aqui.
 - Painel: barras de texto `█`/`░` com largura `min(40, bodyColumns − 2)`; `/uso painel` informa quando a tela não comporta painel (`isPlaced` falso).
 
 ## Onde mostrar

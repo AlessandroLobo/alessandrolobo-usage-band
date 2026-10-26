@@ -27,20 +27,22 @@ Todos os números chegam **a cada resposta** do Claude, direto do Claude Code �
 
 ## Cores
 
-As cores são da paleta **Everforest**, as mesmas da extensão [claude-usage-statusbar](https://github.com/AlessandroLobo/claude-usage-statusbar) no VS Code/Antigravity, para a barra ficar igual nos dois lugares.
+As cores seguem o mesmo **degradê por uso**, o mesmo da extensão [claude-usage-statusbar](https://github.com/AlessandroLobo/claude-usage-statusbar) no VS Code/Antigravity, para a barra ficar igual nos dois lugares: a cor-base vale até 50%, vira âmbar em 75% e chega ao vermelho em 90%.
 
 | Item | Quando | Cor |
 | --- | --- | --- |
-| Limite **5h** | normal | azul `#7fbbb3` |
-| Limite **7d** | normal | amarelo `#dbbc7f` |
-| Limite 5h ou 7d | a partir de **90%** | vermelho `#e67e80`, e um aviso (toast) aparece |
-| Tempo e contexto | contexto a partir de **80%** | laranja `#e69875` |
-| Barra de contexto no painel | normal | verde `#a7c080` |
+| Limites **5h** e **7d** | até **50%** | verde `#89d185` |
+| Limites 5h e 7d | de **50%** a **90%** | verde → âmbar `#e5a50a` (75%) → vermelho |
+| Limite 5h ou 7d | a partir de **90%** | vermelho `#f14c4c`, e um aviso (toast) aparece |
+| Contexto (texto) | a partir de **75%** | âmbar → vermelho |
+| Barra de contexto no painel | até **50%** | verde `#89d185`, com o mesmo degradê |
 | Separadores `·` | sempre | esmaecidos |
 
 São tons pensados para fundo escuro; num tema claro do Claude Code ficam mais suaves.
 
 ## Painel
+
+Em cada limite o painel mostra o tempo restante e o horário do reinício, por exemplo `Reseta em 2h18 (às 19:08)` e, no semanal, `Reseta em 4d 4h (ter. às 21:00)`.
 
 `/uso painel` abre o painel **Uso do Claude**, com barras de progresso nas mesmas cores:
 

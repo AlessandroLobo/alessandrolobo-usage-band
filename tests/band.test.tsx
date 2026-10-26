@@ -44,17 +44,17 @@ test('a barra mostra tempo, contexto, limites com reinício e cores por limite',
     expect(await ui.find({ type: 'Text', text: /⏱ 60m · 50k\/200k \(25%\)/ })).toBeDefined()
 
     const five = await ui.find({ type: 'Text', text: /^5h 42% ↻1h00$/ })
-    expect(five?.props.color).toBe('#7fbbb3')
+    expect(five?.props.color).toBe('#89d185')
 
     const week = await ui.find({ type: 'Text', text: /^7d 93% ↻2d 0h$/ })
-    expect(week?.props.color).toBe('#e67e80')
+    expect(week?.props.color).toBe('#f14c4c')
 
     expect(await ui.find({ type: 'Text', text: /US\$ 1\.50/ })).toBeDefined()
     await ui.unmount()
   }
 })
 
-test('o painel mostra barras e o tempo até reiniciar', async ($, on) => {
+test('o painel mostra barras e o tempo até reiniciar com o horário', async ($, on) => {
   setup(on)
   on('ui.render', ($$, e) => {
     const { Box } = $$.ui.resolve(e)
@@ -66,7 +66,7 @@ test('o painel mostra barras e o tempo até reiniciar', async ($, on) => {
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'usage-band', surface, ...PANE })
     expect(await ui.find({ type: 'Text', text: 'Sessão (5h)' })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: 'Reseta em 1h00' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^Reseta em 1h00 \(\S+ \d{2}:\d{2}\)$/ })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: 'Semanal (7 dias)' })).toBeDefined()
     expect(await ui.find({ type: 'Text', text: /█+/ })).toBeDefined()
     await ui.unmount()
